@@ -1,16 +1,24 @@
 NAME := Ksign
 PLATFORM := iphoneos
 SCHEMES := Ksign
-TMP := $(TMPDIR)/$(NAME)
+
+# ⬇️ Choix de config: Release (défaut) ou Debug
+CONFIGURATION ?= Release
+
+# ⬇️ DerivedData isolé par config pour éviter les collisions en parallèle
+VARIANT_DIR := $(CONFIGURATION)
+TMP := $(TMPDIR)/$(NAME)/$(VARIANT_DIR)
 STAGE := $(TMP)/stage
-APP := $(TMP)/Build/Products/Release-$(PLATFORM)
+
+# ⬇️ Le chemin produits suit la config (Release-iphoneos, Debug-iphoneos, etc.)
+APP := $(TMP)/Build/Products/$(CONFIGURATION)-$(PLATFORM)
 
 .PHONY: all clean $(SCHEMES)
 
 all: $(SCHEMES)
 
 clean:
-	rm -rf "$(TMP)"
+	rm -rf "$(TMPDIR)/$(NAME)"
 	rm -rf packages
 	rm -rf Payload
 
@@ -28,27 +36,34 @@ $(SCHEMES): deps
 	xcodebuild \
 	    -project Ksign.xcodeproj \
 	    -scheme "$@" \
-	    -configuration Release \
+	    -configuration "$(CONFIGURATION)" \
 	    -arch arm64 \
-	    -sdk $(PLATFORM) \
-	    -derivedDataPath $(TMP) \
+	    -sdk "$(PLATFORM)" \
+	    -derivedDataPath "$(TMP)" \
 	    -skipPackagePluginValidation \
 	    CODE_SIGNING_ALLOWED=NO \
 	    ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES=NO
 
+	# Stage Payload
 	rm -rf Payload
 	rm -rf "$(STAGE)/"
 	mkdir -p "$(STAGE)/Payload"
 
 	mv "$(APP)/$@.app" "$(STAGE)/Payload/$@.app"
 
+	# Permissions + ad-hoc sign
 	chmod -R 0755 "$(STAGE)/Payload/$@.app"
 	codesign --force --sign - --timestamp=none "$(STAGE)/Payload/$@.app"
 
+	# Dépendances runtime
 	cp deps/* "$(STAGE)/Payload/$@.app/" || true
 
+	# Nettoyage signature embarquée
 	rm -rf "$(STAGE)/Payload/$@.app/_CodeSignature"
+
+	# Symlink Payload à la racine (comme avant)
 	ln -sf "$(STAGE)/Payload" Payload
-	
+
+	# Zip → nom explicite par config
 	mkdir -p packages
-	zip -r9 "packages/$@.ipa" Payload
+	zip -r9 "packages/$@-$(CONFIGURATION).ipa" Payload
