@@ -1,16 +1,14 @@
-name: Build Ksign (Debug & Release)
+name: Build Ksign
 
 on:
   workflow_dispatch:
 
+env:
+  CONFIGURATION: Release
+
 jobs:
   build:
     runs-on: macos-15
-    strategy:
-      fail-fast: false
-      matrix:
-        config: [Release, Debug]
-
     steps:
       - name: Checkout
         uses: actions/checkout@v3
@@ -24,17 +22,17 @@ jobs:
       - name: Set build version from commit
         run: agvtool new-version -all "$(git rev-parse HEAD)"
 
-      - name: Build ${{ matrix.config }}
+      - name: Build Release
         run: |
-          make CONFIGURATION="${{ matrix.config }}"
-          mkdir -p "upload/${{ matrix.config }}"
-          mv "packages/Ksign-${{ matrix.config }}.ipa" "upload/${{ matrix.config }}/"
+          make CONFIGURATION="${CONFIGURATION}"
+          mkdir -p "upload/${CONFIGURATION}"
+          mv "packages/Ksign-${CONFIGURATION}.ipa" "upload/${CONFIGURATION}/"
 
-      - name: Upload artifact (${{ matrix.config }})
+      - name: Upload artifact (Release)
         uses: actions/upload-artifact@v4
         with:
-          name: Ksign-${{ matrix.config }}
-          path: upload/${{ matrix.config }}/*
+          name: Ksign-${{ env.CONFIGURATION }}
+          path: upload/${{ env.CONFIGURATION }}/*
 
   release:
     runs-on: macos-15
@@ -58,7 +56,6 @@ jobs:
       - name: Determine version
         shell: bash
         run: |
-          # Try MARKETING_VERSION from the project; fallback to date+sha
           VERSION="$(agvtool what-marketing-version -terse1 2>/dev/null | tail -n1 || true)"
           if [ -z "$VERSION" ]; then VERSION="$(date +%Y.%m.%d)-$(git rev-parse --short HEAD)"; fi
           echo "VERSION=$VERSION" >> "$GITHUB_ENV"
