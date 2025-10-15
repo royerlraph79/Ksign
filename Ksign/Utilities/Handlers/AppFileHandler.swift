@@ -81,7 +81,6 @@ final class AppFileHandler: NSObject, @unchecked Sendable {
 			overwrite: true,
 			password: nil,
 			progress: { progress in
-				print("[\(self._uuid)] Unzip progress: \(progress)")
 				if let download = download {
 					DispatchQueue.main.async {
 						download.unpackageProgress = progress
@@ -98,7 +97,6 @@ final class AppFileHandler: NSObject, @unchecked Sendable {
 		
 		for (index, entry) in entries.enumerated() {
 			let progress = Double(index) / Double(totalEntries)
-			print("[\(_uuid)] Unzip(ZIPFoundation) progress: \(progress)")
 			if let download = download {
 				DispatchQueue.main.async {
 					download.unpackageProgress = progress

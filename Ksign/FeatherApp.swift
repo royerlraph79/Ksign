@@ -87,22 +87,14 @@ struct FeatherApp: App {
 			DispatchQueue.main.async {
 				switch result {
 				case .success(let message):
-					_showAlert(title: "Import Successful", message: message)
+                    UIAlertController.showAlertWithOk(title: "Import Successful", message: message)
 				case .failure(let error):
-					_showAlert(title: "Import Failed", message: error.localizedDescription)
+                    UIAlertController.showAlertWithOk(title: "Import Failed", message: error.localizedDescription)
 				}
 			}
 		}
 	}
 	
-	private func _showAlert(title: String, message: String) {
-		guard let window = UIApplication.shared.windows.first else { return }
-		
-		let alert = UIAlertController(title: title, message: message, preferredStyle: .alert)
-		alert.addAction(UIAlertAction(title: "OK", style: .default))
-		
-		window.rootViewController?.present(alert, animated: true)
-	}
 }
 
 class AppDelegate: NSObject, UIApplicationDelegate {
@@ -113,7 +105,6 @@ class AppDelegate: NSObject, UIApplicationDelegate {
         
         _createPipeline()
         _createSourcesDirectory()
-        _createTweaksDirectory()
         if !UserDefaults.standard.bool(forKey: "hasInitializedBuiltInSources") {
             _initializeBuiltInSources()
             UserDefaults.standard.set(true, forKey: "hasInitializedBuiltInSources")
@@ -172,18 +163,6 @@ class AppDelegate: NSObject, UIApplicationDelegate {
         
         for url in directories {
             try? fileManager.createDirectoryIfNeeded(at: url)
-        }
-    }
-    
-    private func _createTweaksDirectory() {
-        let fileManager = FileManager.default
-        let tweaksDirectory = fileManager.tweaks
-        
-        do {
-            try fileManager.createDirectoryIfNeeded(at: tweaksDirectory)
-            print("Tweaks directory created at: \(tweaksDirectory.path)")
-        } catch {
-            print("Error creating tweaks directory: \(error)")
         }
     }
     
