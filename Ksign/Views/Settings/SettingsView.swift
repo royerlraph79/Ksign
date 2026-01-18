@@ -10,18 +10,25 @@ import NimbleViews
 
 // MARK: - View
 struct SettingsView: View {
+
+	#if false
 	private let _donationsUrl = "https://github.com/sponsors/nyasami"
 	private let _githubUrl = "https://github.com/nyasami/ksign"
     private let _discordUrl = "https://discord.gg/sfbZfQzVdQ"
+	#endif
+
 	// MARK: Body
     var body: some View {
 		NBNavigationView(.localized("Settings")) {
 			Form {
-//				#if !NIGHTLY && !DEBUG
+
+				#if false
 				SettingsDonationCellView(site: _donationsUrl)
-//				#endif
-				
+				#endif
+
+				#if false
 				_feedback()
+				#endif
 				
 				Section {
                     NavigationLink(destination: AppIconView()) {
@@ -76,6 +83,8 @@ struct SettingsView: View {
 
 // MARK: - View extension
 extension SettingsView {
+
+	#if false
 	@ViewBuilder
 	private func _feedback() -> some View {
 		Section {
@@ -93,6 +102,7 @@ extension SettingsView {
             }
 		}
 	}
+	#endif
 	
 	@ViewBuilder
 	private func _directories() -> some View {
