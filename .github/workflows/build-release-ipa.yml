@@ -1,0 +1,49 @@
+name: Build Release IPA (Ksign)
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: macos-latest
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout (with submodules)
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Show environment
+        run: |
+          sw_vers
+          xcodebuild -version
+          xcode-select -p
+
+      # Optional but helps reduce "first build" weirdness with SwiftPM
+      - name: Resolve SwiftPM dependencies
+        run: |
+          xcodebuild -resolvePackageDependencies \
+            -project Ksign.xcodeproj \
+            -scheme Ksign \
+            -skipPackagePluginValidation
+
+      - name: Build + package IPA (Release)
+        run: |
+          make clean
+          make
+
+      - name: Verify output
+        run: |
+          echo "== packages directory =="
+          ls -la packages || true
+          echo "== ipa files =="
+          ls -la packages/*.ipa
+
+      - name: Upload IPA artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: Ksign-Release-IPA
+          path: packages/*.ipa
+          if-no-files-found: error
