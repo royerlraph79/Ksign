@@ -1,4 +1,4 @@
-name: Build Ksign Release IPA
+name: Build Ksign
 
 on:
   workflow_dispatch:
