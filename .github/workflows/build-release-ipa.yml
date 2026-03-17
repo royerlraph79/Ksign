@@ -3,6 +3,9 @@ name: Build Ksign
 on:
   workflow_dispatch:
 
+permissions:
+  contents: write
+
 jobs:
   build:
     runs-on: macos-26
@@ -24,14 +27,16 @@ jobs:
           make clean
           make
 
-      - name: Prepare artifacts
+      - name: Prepare IPA
         run: |
           mkdir -p upload
-          mv packages/* upload/
+          cp packages/*.ipa upload/Ksign.ipa
+          ls -lah upload
 
-      - name: Upload IPA
-        uses: actions/upload-artifact@v6
+      - name: Upload IPA to release
+        uses: softprops/action-gh-release@v2
         with:
-          name: Ksign-IPA
-          path: upload/*.ipa
-          if-no-files-found: error
+          tag_name: beta
+          name: beta
+          prerelease: true
+          files: upload/Ksign.ipa
