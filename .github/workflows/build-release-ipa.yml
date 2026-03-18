@@ -33,10 +33,20 @@ jobs:
           cp packages/*.ipa upload/Ksign.ipa
           ls -lah upload
 
-      - name: Upload IPA to release
-        uses: softprops/action-gh-release@v2
-        with:
-          tag_name: beta
-          name: beta
-          prerelease: true
-          files: upload/Ksign.ipa
+      - name: Create or update beta release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+
+          TAG="beta"
+          FILE="upload/Ksign.ipa"
+
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            gh release upload "$TAG" "$FILE" --clobber
+          else
+            gh release create "$TAG" "$FILE" \
+              --title "$TAG" \
+              --prerelease \
+              --notes "Automated build"
+          fi
