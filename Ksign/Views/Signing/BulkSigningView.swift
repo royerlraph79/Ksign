@@ -9,6 +9,13 @@ import SwiftUI
 import NimbleViews
 import PhotosUI
 
+struct AppSignConfig: Identifiable {
+    var id: String? { app.uuid }
+    var app: AppInfoPresentable
+    var options: Options
+    var icon: UIImage?
+}
+
 struct BulkSigningView: View {
 	@FetchRequest(
 		entity: CertificatePair.entity(),
@@ -22,15 +29,14 @@ struct BulkSigningView: View {
 	}
 	
 	@StateObject private var _optionsManager = OptionsManager.shared
-	@State private var _temporaryOptions: Options = OptionsManager.shared.options
+	@State private var _configs: [AppSignConfig]
 	@State private var _temporaryCertificate: Int
 	@State private var _isAltPickerPresenting = false
 	@State private var _isFilePickerPresenting = false
 	@State private var _isImagePickerPresenting = false
 	@State private var _isSigning = false
 	@State private var _selectedPhoto: PhotosPickerItem? = nil
-	@State var appIcon: UIImage?
-	@State private var _selectedAppForIcon: AnyApp?
+	@State private var _editingConfigId: String?
 	
 	@Environment(\.dismiss) private var dismiss
 	var apps: [AppInfoPresentable]
@@ -39,6 +45,9 @@ struct BulkSigningView: View {
 		self.apps = apps
 		let storedCert = UserDefaults.standard.integer(forKey: "feather.selectedCert")
 		__temporaryCertificate = State(initialValue: storedCert)
+		
+		let defaultOptions = OptionsManager.shared.options
+		__configs = State(initialValue: apps.map { AppSignConfig(app: $0, options: defaultOptions, icon: nil) })
 	}
 
 	var body: some View {
@@ -46,10 +55,10 @@ struct BulkSigningView: View {
 			Form {
                 _cert()
 				
-				ForEach(apps, id: \.uuid) { app in
+				ForEach($_configs) { $config in
 					Section {
-						_customizationOptions(for: app)
-						_customizationProperties(for: app)
+						_customizationOptions(for: $config)
+						_customizationProperties(for: $config)
 					}
 				}
 			}
@@ -68,13 +77,21 @@ struct BulkSigningView: View {
 					style: .text,
 					placement: .topBarTrailing
 				) {
-					_temporaryOptions = OptionsManager.shared.options
-					appIcon = nil
+					let defaultOptions = OptionsManager.shared.options
+					for i in _configs.indices {
+						_configs[i].options = defaultOptions
+						_configs[i].icon = nil
+					}
 				}
 			}
 			.sheet(isPresented: $_isAltPickerPresenting) {
-				if let selected = _selectedAppForIcon {
-					SigningAlternativeIconView(app: selected.base, appIcon: $appIcon, isModifing: .constant(true))
+				if let id = _editingConfigId, let index = _configs.firstIndex(where: { $0.id == id }) {
+					let appBase = _configs[index].app
+					let iconBinding = Binding<UIImage?>(
+						get: { _configs[index].icon },
+						set: { _configs[index].icon = $0 }
+					)
+					SigningAlternativeIconView(app: appBase, appIcon: iconBinding, isModifing: .constant(true))
 				}
 			}
 			.sheet(isPresented: $_isFilePickerPresenting) {
@@ -82,7 +99,8 @@ struct BulkSigningView: View {
 					allowedContentTypes:  [.image],
 					onDocumentsPicked: { urls in
 						guard let selectedFileURL = urls.first else { return }
-						self.appIcon = UIImage.fromFile(selectedFileURL)?.resizeToSquare()
+						guard let id = _editingConfigId, let index = _configs.firstIndex(where: { $0.id == id }) else { return }
+						_configs[index].icon = UIImage.fromFile(selectedFileURL)?.resizeToSquare()
 					}
 				)
 			}
@@ -90,10 +108,12 @@ struct BulkSigningView: View {
 			.onChange(of: _selectedPhoto) { newValue in
 				guard let newValue else { return }
 				
-				Task {
+				Task { @MainActor in
 					if let data = try? await newValue.loadTransferable(type: Data.self),
 					   let image = UIImage(data: data)?.resizeToSquare() {
-						appIcon = image
+						if let id = _editingConfigId, let index = _configs.firstIndex(where: { $0.id == id }) {
+							_configs[index].icon = image
+						}
 					}
 				}
 			}
@@ -105,33 +125,49 @@ struct BulkSigningView: View {
 
 extension BulkSigningView {
 	@ViewBuilder
-	private func _customizationOptions(for app: AppInfoPresentable) -> some View {
+	private func _customizationOptions(for config: Binding<AppSignConfig>) -> some View {
 			Menu {
-				Button(.localized("Select Alternative Icon")) { _isAltPickerPresenting = true }
-				Button(.localized("Choose from Files")) { _isFilePickerPresenting = true }
-				Button(.localized("Choose from Photos")) { _isImagePickerPresenting = true }
+				Button(.localized("Select Alternative Icon")) {
+					_editingConfigId = config.wrappedValue.id
+					_isAltPickerPresenting = true 
+				}
+				Button(.localized("Choose from Files")) {
+					_editingConfigId = config.wrappedValue.id
+					_isFilePickerPresenting = true 
+				}
+				Button(.localized("Choose from Photos")) {
+					_editingConfigId = config.wrappedValue.id
+					_isImagePickerPresenting = true 
+				}
 			} label: {
-				FRAppIconView(app: app, size: 55)
+				if let customIcon = config.icon.wrappedValue {
+					Image(uiImage: customIcon)
+						.resizable()
+						.frame(width: 55, height: 55)
+						.cornerRadius(12)
+				} else {
+					FRAppIconView(app: config.app.wrappedValue, size: 55)
+				}
 			}
-			_infoCell(.localized("Name"), desc: _temporaryOptions.appName ?? app.name) {
+			_infoCell(.localized("Name"), desc: config.options.appName.wrappedValue ?? config.app.wrappedValue.name) {
 				SigningPropertiesView(
 					title: .localized("Name"),
-					initialValue: _temporaryOptions.appName ?? (app.name ?? ""),
-					bindingValue: $_temporaryOptions.appName
+					initialValue: config.options.appName.wrappedValue ?? (config.app.wrappedValue.name ?? ""),
+					bindingValue: config.options.appName
 				)
 			}
-			_infoCell(.localized("Identifier"), desc: _temporaryOptions.appIdentifier ?? app.identifier) {
+			_infoCell(.localized("Identifier"), desc: config.options.appIdentifier.wrappedValue ?? config.app.wrappedValue.identifier) {
 				SigningPropertiesView(
 					title: .localized("Identifier"),
-					initialValue: _temporaryOptions.appIdentifier ?? (app.identifier ?? ""),
-					bindingValue: $_temporaryOptions.appIdentifier
+					initialValue: config.options.appIdentifier.wrappedValue ?? (config.app.wrappedValue.identifier ?? ""),
+					bindingValue: config.options.appIdentifier
 				)
 			}
-			_infoCell(.localized("Version"), desc: _temporaryOptions.appVersion ?? app.version) {
+			_infoCell(.localized("Version"), desc: config.options.appVersion.wrappedValue ?? config.app.wrappedValue.version) {
 				SigningPropertiesView(
 					title: .localized("Version"),
-					initialValue: _temporaryOptions.appVersion ?? (app.version ?? ""),
-					bindingValue: $_temporaryOptions.appVersion
+					initialValue: config.options.appVersion.wrappedValue ?? (config.app.wrappedValue.version ?? ""),
+					bindingValue: config.options.appVersion
 				)
 			}
 	}
@@ -153,38 +189,38 @@ extension BulkSigningView {
 	}
 	
 	@ViewBuilder
-	private func _customizationProperties(for app: AppInfoPresentable) -> some View {
+	private func _customizationProperties(for config: Binding<AppSignConfig>) -> some View {
 			DisclosureGroup(.localized("Modify")) {
 				NavigationLink(.localized("Existing Dylibs")) {
 					SigningDylibView(
-						app: app,
-						options: $_temporaryOptions.optional()
+						app: config.app.wrappedValue,
+						options: config.options.optional()
 					)
 				}
 				
 				NavigationLink(String.localized("Frameworks & PlugIns")) {
 					SigningFrameworksView(
-						app: app,
-						options: $_temporaryOptions.optional()
+						app: config.app.wrappedValue,
+						options: config.options.optional()
 					)
 				}
 				#if NIGHTLY || DEBUG
 				NavigationLink(String.localized("Entitlements")) {
 					SigningEntitlementsView(
-						bindingValue: $_temporaryOptions.appEntitlementsFile
+						bindingValue: config.options.appEntitlementsFile
 					)
 				}
 				#endif
 				NavigationLink(String.localized("Tweaks")) {
 					SigningTweaksView(
-						options: $_temporaryOptions
+						options: config.options
 					)
 				}
 			}
 			
 			NavigationLink(String.localized("Properties")) {
 				Form { SigningOptionsView(
-					options: $_temporaryOptions,
+					options: config.options,
 					temporaryOptions: _optionsManager.options
 				)}
 			.navigationTitle(.localized("Properties"))
@@ -203,7 +239,8 @@ extension BulkSigningView {
 	}
 
 	private func _start() {
-		guard _selectedCert() != nil || _temporaryOptions.doAdhocSigning || _temporaryOptions.onlyModify else {
+		let canSign = _selectedCert() != nil || _configs.allSatisfy { $0.options.doAdhocSigning || $0.options.onlyModify }
+		guard canSign else {
 			UIAlertController.showAlertWithOk(
 				title: .localized("No Certificate"),
 				message: .localized("Please go to settings and import a valid certificate"),
@@ -217,11 +254,11 @@ extension BulkSigningView {
 		_isSigning = true
 
 		
-		for app in apps {
+		for config in _configs {
 			FR.signPackageFile(
-				app,
-				using: _temporaryOptions,
-				icon: appIcon,
+				config.app,
+				using: config.options,
+				icon: config.icon,
 				certificate: _selectedCert()
 			) { [self] error in
 				if let error {
