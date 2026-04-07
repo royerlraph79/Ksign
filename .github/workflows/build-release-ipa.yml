@@ -51,7 +51,7 @@ jobs:
           ls -lah "$OUTPUT_DIR"
 
       - name: Upload workflow artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: Ksign-ipa
           path: upload/Ksign.ipa
@@ -115,12 +115,6 @@ jobs:
             echo "tag=$TAG"
             echo "title=$TITLE"
           } >> "$GITHUB_OUTPUT"
-
-          echo "Detected version: $VERSION"
-          echo "Detected build: $BUILD"
-          echo "Detected bundle id: ${BUNDLE_ID:-unknown}"
-          echo "Release tag: $TAG"
-          echo "Release title: $TITLE"
 
       - name: Delete existing release and tag if present
         env:
