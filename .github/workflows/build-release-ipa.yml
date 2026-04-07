@@ -10,43 +10,154 @@ jobs:
   build:
     runs-on: macos-26
 
+    env:
+      APP_NAME: Ksign
+      OUTPUT_DIR: upload
+
     steps:
       - name: Checkout
         uses: actions/checkout@v5
         with:
           submodules: recursive
+          fetch-depth: 0
 
       - name: Use Xcode 26.2
         run: |
+          set -euo pipefail
           ls /Applications
           sudo xcode-select -s /Applications/Xcode_26.2.app/Contents/Developer
           xcodebuild -version
 
       - name: Build Ksign
         run: |
+          set -euo pipefail
           make clean
           make
 
       - name: Prepare IPA
         run: |
-          mkdir -p upload
-          cp packages/*.ipa upload/Ksign.ipa
-          ls -lah upload
+          set -euo pipefail
 
-      - name: Create or update beta release
+          mkdir -p "$OUTPUT_DIR"
+
+          IPA_SOURCE="$(find packages -maxdepth 1 -type f -name '*.ipa' | head -n 1)"
+
+          if [ -z "${IPA_SOURCE:-}" ]; then
+            echo "No IPA found in packages/"
+            exit 1
+          fi
+
+          cp "$IPA_SOURCE" "$OUTPUT_DIR/${APP_NAME}.ipa"
+          ls -lah "$OUTPUT_DIR"
+
+      - name: Upload workflow artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: Ksign-ipa
+          path: upload/Ksign.ipa
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Extract app version from IPA
+        id: meta
+        run: |
+          set -euo pipefail
+
+          IPA="upload/Ksign.ipa"
+          TMP_DIR="$(mktemp -d)"
+
+          unzip -q "$IPA" -d "$TMP_DIR"
+
+          APP_DIR="$(find "$TMP_DIR/Payload" -maxdepth 1 -type d -name '*.app' | head -n 1)"
+          if [ -z "${APP_DIR:-}" ]; then
+            echo "Could not find .app inside IPA Payload/"
+            exit 1
+          fi
+
+          INFO_PLIST="$APP_DIR/Info.plist"
+          if [ ! -f "$INFO_PLIST" ]; then
+            echo "Could not find Info.plist inside app bundle"
+            exit 1
+          fi
+
+          VERSION="$(/usr/libexec/PlistBuddy -c 'Print :CFBundleShortVersionString' "$INFO_PLIST" 2>/dev/null || true)"
+          BUILD="$(/usr/libexec/PlistBuddy -c 'Print :CFBundleVersion' "$INFO_PLIST" 2>/dev/null || true)"
+          BUNDLE_ID="$(/usr/libexec/PlistBuddy -c 'Print :CFBundleIdentifier' "$INFO_PLIST" 2>/dev/null || true)"
+          APP_DISPLAY_NAME="$(/usr/libexec/PlistBuddy -c 'Print :CFBundleDisplayName' "$INFO_PLIST" 2>/dev/null || true)"
+          APP_BUNDLE_NAME="$(/usr/libexec/PlistBuddy -c 'Print :CFBundleName' "$INFO_PLIST" 2>/dev/null || true)"
+
+          rm -rf "$TMP_DIR"
+
+          if [ -z "${VERSION:-}" ]; then
+            echo "Could not read CFBundleShortVersionString from Info.plist"
+            exit 1
+          fi
+
+          if [ -z "${BUILD:-}" ]; then
+            BUILD="${GITHUB_RUN_NUMBER}"
+          fi
+
+          if [ -n "${APP_DISPLAY_NAME:-}" ]; then
+            RELEASE_NAME="$APP_DISPLAY_NAME"
+          elif [ -n "${APP_BUNDLE_NAME:-}" ]; then
+            RELEASE_NAME="$APP_BUNDLE_NAME"
+          else
+            RELEASE_NAME="${APP_NAME}"
+          fi
+
+          TAG="v${VERSION}"
+          TITLE="${RELEASE_NAME} ${VERSION} (${BUILD})"
+
+          {
+            echo "version=$VERSION"
+            echo "build=$BUILD"
+            echo "bundle_id=$BUNDLE_ID"
+            echo "tag=$TAG"
+            echo "title=$TITLE"
+          } >> "$GITHUB_OUTPUT"
+
+          echo "Detected version: $VERSION"
+          echo "Detected build: $BUILD"
+          echo "Detected bundle id: ${BUNDLE_ID:-unknown}"
+          echo "Release tag: $TAG"
+          echo "Release title: $TITLE"
+
+      - name: Delete existing release and tag if present
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           set -euo pipefail
 
-          TAG="beta"
-          FILE="upload/Ksign.ipa"
+          TAG="${{ steps.meta.outputs.tag }}"
 
           if gh release view "$TAG" >/dev/null 2>&1; then
-            gh release upload "$TAG" "$FILE" --clobber
+            echo "Existing release '$TAG' found. Deleting release and tag..."
+            gh release delete "$TAG" --cleanup-tag -y
           else
-            gh release create "$TAG" "$FILE" \
-              --title "$TAG" \
-              --prerelease \
-              --notes "Automated build"
+            echo "No existing release for '$TAG'. Checking for stray tag..."
+            if git ls-remote --exit-code --tags origin "refs/tags/$TAG" >/dev/null 2>&1; then
+              echo "Stray remote tag '$TAG' found. Deleting it..."
+              git push origin --delete "$TAG"
+            else
+              echo "No stray remote tag for '$TAG'."
+            fi
           fi
+
+      - name: Create GitHub release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+
+          gh release create "${{ steps.meta.outputs.tag }}" "upload/Ksign.ipa" \
+            --title "${{ steps.meta.outputs.title }}" \
+            --notes "$(cat <<EOF
+          Automated build for ${{ steps.meta.outputs.title }}
+
+          Version: ${{ steps.meta.outputs.version }}
+          Build: ${{ steps.meta.outputs.build }}
+          Bundle ID: ${{ steps.meta.outputs.bundle_id }}
+          Commit: ${GITHUB_SHA}
+          Workflow run: ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}
+          EOF
+          )"
