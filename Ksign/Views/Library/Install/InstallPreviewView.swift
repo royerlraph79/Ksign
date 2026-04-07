@@ -8,6 +8,7 @@
 import SwiftUI
 import NimbleViews
 import IDeviceSwift
+import OSLog
 
 // MARK: - View
 struct InstallPreviewView: View {
@@ -20,6 +21,7 @@ struct InstallPreviewView: View {
     @AppStorage("Feather.installationMethod") private var _installationMethod: Int = 0
 	@AppStorage("Feather.serverMethod") private var _serverMethod: Int = 0
 	@State private var _isWebviewPresenting = false
+    @State private var progressTask: Task<Void, Never>?
 	
 	var app: AppInfoPresentable
 	@StateObject var viewModel: InstallerStatusViewModel
@@ -29,7 +31,8 @@ struct InstallPreviewView: View {
 	init(app: AppInfoPresentable, isSharing: Bool = false) {
 		self.app = app
 		self.isSharing = isSharing
-		let viewModel = InstallerStatusViewModel()
+        let method = UserDefaults.standard.integer(forKey: "Feather.installationMethod")
+		let viewModel = InstallerStatusViewModel(isIdevice: method == 1)
 		self._viewModel = StateObject(wrappedValue: viewModel)
 		self._installer = StateObject(wrappedValue: try! ServerInstaller(app: app, viewModel: viewModel))
 	}
@@ -55,13 +58,27 @@ struct InstallPreviewView: View {
 					_isWebviewPresenting = true
 				}
 			}
+            
+            if case .installing = newStatus {
+                if progressTask == nil {
+                    progressTask = startInstallProgressPolling(
+                        bundleID: app.identifier!,
+                        viewModel: viewModel
+                    )
+                }
+            }
 			
 			if case .sendingPayload = newStatus, _serverMethod == 1 {
 				_isWebviewPresenting = false
 			}
             
-            if case .completed = newStatus {
+            switch newStatus {
+            case .completed, .broken(_):
+                progressTask?.cancel()
+                progressTask = nil
                 BackgroundAudioManager.shared.stop()
+            default:
+                break
             }
 		}
 		.onAppear(perform: _install)
@@ -69,6 +86,8 @@ struct InstallPreviewView: View {
 			BackgroundAudioManager.shared.start()
 		}
 		.onDisappear {
+            progressTask?.cancel()
+            progressTask = nil
 			BackgroundAudioManager.shared.stop()
 		}
 	}
@@ -83,6 +102,14 @@ struct InstallPreviewView: View {
 	}
 	
 	private func _install() {
+        guard isSharing || app.identifier != Bundle.main.bundleIdentifier! || _installationMethod == 1 else {
+            UIAlertController.showAlertWithOk(
+                title: .localized("Install"),
+                message: .localized("You cannot update ‘%@‘ with itself, please use an alternative tool to update it.", arguments: Bundle.main.name)
+            )
+            return
+        }
+
 		Task.detached {
 			do {
 				let handler = await ArchiveHandler(app: app, viewModel: viewModel)
@@ -95,6 +122,17 @@ struct InstallPreviewView: View {
                         await MainActor.run {
                             installer.packageUrl = packageUrl
                             viewModel.status = .ready
+                        }
+                        
+                        if case .installing = await viewModel.status {
+                            let task = await startInstallProgressPolling(
+                                bundleID: app.identifier!,
+                                viewModel: viewModel
+                            )
+
+                            await MainActor.run {
+                                progressTask = task
+                            }
                         }
                     }
                     else if await _installationMethod == 1 {
@@ -118,6 +156,7 @@ struct InstallPreviewView: View {
 					}
 				}
 			} catch {
+                await progressTask?.cancel()
 				await MainActor.run {
 					UIAlertController.showAlertWithOk(
 						title: .localized("Install"),
@@ -131,4 +170,46 @@ struct InstallPreviewView: View {
 			}
 		}
 	}
+    private func startInstallProgressPolling(
+            bundleID: String,
+            viewModel: InstallerStatusViewModel
+        ) -> Task<Void, Never> {
+
+            Task.detached(priority: .background) {
+                var hasStarted = false
+
+                while !Task.isCancelled {
+                    let rawProgress = await UIApplication.installProgress(for: bundleID) ?? 0.0
+
+                    if rawProgress > 0 {
+                        hasStarted = true
+                    }
+
+                    let progress = await hasStarted
+                        ? _normalizeInstallProgress(rawProgress)
+                        : 0.0
+
+                    Logger.misc.info("Install progress for \(bundleID): \(progress) - \(rawProgress) - \(viewModel.installProgress)")
+
+                    await MainActor.run {
+                        viewModel.installProgress = progress
+                    }
+
+                    if hasStarted && rawProgress == 0 {
+                        await MainActor.run {
+                            viewModel.installProgress = 1.0
+                            viewModel.status = .completed(.success(()))
+                            print(viewModel.installProgress)
+                        }
+                        break
+                    }
+
+                    try? await Task.sleep(nanoseconds: 1_000_000) // 1 ms
+                }
+            }
+        }
+
+        private func _normalizeInstallProgress(_ rawProgress: Double) -> Double {
+            min(1.0, max(0.0, (rawProgress - 0.6) / 0.3))
+        }
 }

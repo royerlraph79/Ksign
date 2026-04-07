@@ -374,13 +374,13 @@
         "es" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "%LLD requerido Sistema Dylibs no mostrados"
+            "value" : "%lld requerido Sistema Dylibs no mostrados"
           }
         },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "% LLD Dylibs du système requis non illustré"
+            "value" : "%lld Dylibs du système requis non illustré"
           }
         },
         "ru" : {
@@ -452,13 +452,13 @@
         "es" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "e fuentes"
+            "value" : "%lld e fuentes"
           }
         },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "% Sources LLD"
+            "value" : "%lld Sources "
           }
         },
         "ru" : {
