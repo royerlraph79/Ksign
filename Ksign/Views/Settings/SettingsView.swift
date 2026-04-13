@@ -67,7 +67,7 @@ struct SettingsView: View {
                         Label(.localized("Reset"), systemImage: "trash")
                     }
                 } footer: {
-                    Text(.localized("Reset the applications sources, certificates, apps, and general contents."))
+                    Text("Reset the applications sources, certificates, apps, and general contents.")
                 }
 
             }
