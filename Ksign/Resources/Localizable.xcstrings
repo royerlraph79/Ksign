@@ -520,7 +520,7 @@
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "О"
+            "value" : "О Приложении"
           }
         },
         "tr" : {
@@ -543,6 +543,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Über das Originale Feather"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Об Оригинальном Feather"
           }
         },
         "vi" : {
@@ -799,6 +805,12 @@
     "Advanced Installation Method" : {
       "extractionState" : "manual",
       "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Erweiterte Installationsmethode"
+          }
+        },
         "vi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1143,7 +1155,16 @@
       }
     },
     "App Store" : {
+      "comment" : "Asami this also needs to be translated, app store isnt the same everywhere",
       "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "App Store"
+          }
+        }
+      },
       "shouldTranslate" : false
     },
     "Appearance" : {
@@ -2601,6 +2622,12 @@
             "value" : "Fertig"
           }
         },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Готово"
+          }
+        },
         "vi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2724,6 +2751,12 @@
             "value" : "Downloads"
           }
         },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Загрузки"
+          }
+        },
         "vi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2733,6 +2766,7 @@
       }
     },
     "Dylibs" : {
+      "comment" : "Dylibs isn't really supposed to be translated",
       "extractionState" : "manual",
       "localizations" : {
         "cs" : {
@@ -3274,6 +3308,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Fehler"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ошибка"
           }
         },
         "vi" : {
@@ -3850,6 +3890,12 @@
             "value" : "Dateiname"
           }
         },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Имя Файла"
+          }
+        },
         "vi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -4025,6 +4071,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Ordnername"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Имя Папки"
           }
         },
         "vi" : {
@@ -4899,6 +4951,12 @@
     "idevice warning" : {
       "extractionState" : "manual",
       "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dies ist eine erweiterte Installationsmethode das einen Computer erfordert, möchtest du fortfahren?"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
@@ -5041,6 +5099,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Dateien Importieren"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Импортировать Файл"
           }
         },
         "vi" : {
@@ -5273,6 +5337,12 @@
             "value" : "In die Bibliothek importieren"
           }
         },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Добавить в Библиотеку"
+          }
+        },
         "vi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -5477,6 +5547,12 @@
     "Installation" : {
       "extractionState" : "manual",
       "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Installation"
+          }
+        },
         "vi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -6146,6 +6222,12 @@
             "value" : "Neuer Ordner"
           }
         },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Новая Папка"
+          }
+        },
         "vi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -6351,6 +6433,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Keine Dateien"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Нету Файлов"
           }
         },
         "vi" : {
@@ -8008,6 +8096,12 @@
             "value" : "Umbenennen"
           }
         },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Переименовать"
+          }
+        },
         "vi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -8023,6 +8117,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Datei umbenennen"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Переименовать Файл"
           }
         },
         "vi" : {
@@ -8213,6 +8313,12 @@
       "comment" : "A button that deletes all cached data and resets all settings.",
       "isCommentAutoGenerated" : true,
       "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Alles zurücksetzen"
+          }
+        },
         "vi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -8225,6 +8331,12 @@
       "comment" : "The reset action for certificates.",
       "isCommentAutoGenerated" : true,
       "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zertifikate zurücksetzen"
+          }
+        },
         "vi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -8237,6 +8349,12 @@
       "comment" : "The button that deletes imported apps from Core Data.",
       "isCommentAutoGenerated" : true,
       "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Importierte Apps zurücksetzen"
+          }
+        },
         "vi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -8247,6 +8365,12 @@
     },
     "Reset Network Cache" : {
       "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Netzwerk-Cache zurücksetzen"
+          }
+        },
         "vi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -8259,6 +8383,12 @@
       "comment" : "A button that resets all user defaults.",
       "isCommentAutoGenerated" : true,
       "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Einstellungen zurücksetzen"
+          }
+        },
         "vi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -8271,6 +8401,12 @@
       "comment" : "The title of a button that deletes imported apps from Core Data.",
       "isCommentAutoGenerated" : true,
       "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Signierte Apps zurücksetzen"
+          }
+        },
         "vi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -8283,6 +8419,12 @@
       "comment" : "A button that deletes all signed apps from Core Data.",
       "isCommentAutoGenerated" : true,
       "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Quellen zurücksetzen"
+          }
+        },
         "vi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -8330,6 +8472,12 @@
       "comment" : "A footer label for the \"Reset\" section in the settings view.",
       "isCommentAutoGenerated" : true,
       "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Die Applikationsquellen, Zertifikate, Apps und generelle Inhalte zurücksetzen. "
+          }
+        },
         "vi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -8342,6 +8490,12 @@
       "comment" : "A button that clears the work cache.",
       "isCommentAutoGenerated" : true,
       "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Download- und Signiercache zurücksetzen"
+          }
+        },
         "vi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -8362,7 +8516,7 @@
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Herzschlag neustarten"
+            "value" : "Heartbeat neustarten"
           }
         },
         "en" : {
@@ -8846,6 +9000,12 @@
       "comment" : "A detailed description of the two installation methods.",
       "isCommentAutoGenerated" : true,
       "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Server (Empfohlen):\nBenutzt einen lokal gehosteten Server und itms-services:// um Applikationen zu installieren.\n\niDevice (Erweitert):\nBenutzt VPN und eine Pairingdatei. Schreibt auf den AFC und ruft manuell installd während die Aufnahme von Installationsfortschritt über einen Callback stattfindet.\nVorteil: Ist sehr stabil, braucht kein SSL Zertifikat oder extern gehosteten Server. Funktioniert stattdessen ähnlich wie ein Computer."
+          }
+        },
         "vi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -8984,6 +9144,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Zeige Dylibs"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Показать Dylibs"
           }
         },
         "vi" : {
@@ -9440,6 +9606,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Größe"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Размер"
           }
         },
         "vi" : {
@@ -10107,6 +10279,12 @@
     "Switch Back" : {
       "extractionState" : "manual",
       "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zurückwechseln"
+          }
+        },
         "vi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -10647,6 +10825,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Typ"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Тип"
           }
         },
         "vi" : {
