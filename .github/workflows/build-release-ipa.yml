@@ -6,6 +6,10 @@ on:
 permissions:
   contents: write
 
+concurrency:
+  group: release-${{ github.workflow }}
+  cancel-in-progress: false
+
 jobs:
   build:
     runs-on: macos-26
@@ -106,7 +110,7 @@ jobs:
           fi
 
           TAG="v${VERSION}"
-          TITLE="${RELEASE_NAME} ${VERSION} (${BUILD})"
+          TITLE="${RELEASE_NAME} ${VERSION}"
 
           {
             echo "version=$VERSION"
@@ -118,7 +122,7 @@ jobs:
 
       - name: Delete existing release and tag if present
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           set -euo pipefail
 
@@ -126,32 +130,31 @@ jobs:
 
           if gh release view "$TAG" >/dev/null 2>&1; then
             echo "Existing release '$TAG' found. Deleting release and tag..."
-            gh release delete "$TAG" --cleanup-tag -y
+            gh release delete "$TAG" --cleanup-tag --yes
           else
-            echo "No existing release for '$TAG'. Checking for stray tag..."
-            if git ls-remote --exit-code --tags origin "refs/tags/$TAG" >/dev/null 2>&1; then
-              echo "Stray remote tag '$TAG' found. Deleting it..."
-              git push origin --delete "$TAG"
-            else
-              echo "No stray remote tag for '$TAG'."
-            fi
+            echo "No existing release for '$TAG'."
+          fi
+
+          if git ls-remote --exit-code --tags origin "refs/tags/$TAG" >/dev/null 2>&1; then
+            echo "Remote tag '$TAG' still exists. Deleting it..."
+            git push origin ":refs/tags/$TAG"
           fi
 
       - name: Create GitHub release
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           set -euo pipefail
 
           gh release create "${{ steps.meta.outputs.tag }}" "upload/Ksign.ipa" \
             --title "${{ steps.meta.outputs.title }}" \
             --notes "$(cat <<EOF
-          Automated build for ${{ steps.meta.outputs.title }}
+Automated build for ${{ steps.meta.outputs.title }}
 
-          Version: ${{ steps.meta.outputs.version }}
-          Build: ${{ steps.meta.outputs.build }}
-          Bundle ID: ${{ steps.meta.outputs.bundle_id }}
-          Commit: ${GITHUB_SHA}
-          Workflow run: ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}
-          EOF
-          )"
+Version: ${{ steps.meta.outputs.version }}
+Build: ${{ steps.meta.outputs.build }}
+Bundle ID: ${{ steps.meta.outputs.bundle_id }}
+Commit: ${GITHUB_SHA}
+Workflow run: ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}
+EOF
+)"
