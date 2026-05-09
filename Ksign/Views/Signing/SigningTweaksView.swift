@@ -18,16 +18,35 @@ struct SigningTweaksView: View {
 	
 	// MARK: Body
 	var body: some View {
-		List {
+		NBList(.localized("Tweaks")) {
+			NBSection(.localized("Injection")) {
+				Picker(selection: $options.injectPath) {
+					ForEach(Options.InjectPath.allCases, id: \.rawValue) { path in
+						Text(path.localizedDescription).tag(path)
+					}
+				} label: {
+					Label(.localized("Injection Path"), systemImage: "doc.badge.gearshape")
+				}
+				Picker(selection: $options.injectFolder) {
+					ForEach(Options.InjectFolder.allCases, id: \.rawValue) { folder in
+						Text(folder.localizedDescription).tag(folder)
+					}
+				} label: {
+					Label(.localized("Injection Folder"), systemImage: "folder.badge.gearshape")
+				}
+				Toggle(isOn: $options.injectIntoExtensions) {
+					Label(.localized("Inject into Extensions"), systemImage: "syringe")
+				}
+			}
 			if !options.injectionFiles.isEmpty {
-				Section(header: Text("Added Tweaks").font(.subheadline)) {
+				NBSection(.localized("Added Tweaks")) {
 					ForEach(options.injectionFiles, id: \.absoluteString) { tweak in
 						_file(tweak: tweak, isFromOptions: true)
 					}
 				}
 			}
 			if !_tweaksInDirectory.isEmpty {
-				Section(header: Text("Available Tweaks").font(.subheadline)) {
+				NBSection(.localized("Available Tweaks")) {
 					ForEach(_tweaksInDirectory, id: \.absoluteString) { tweak in
 						_file(tweak: tweak, isFromOptions: false)
 					}
@@ -76,8 +95,6 @@ struct SigningTweaksView: View {
 				}
 			)
 		}
-		.animation(.smooth, value: options.injectionFiles)
-		.animation(.smooth, value: _tweaksInDirectory)
 		.onAppear(perform: _loadTweaks)
 	}
 	

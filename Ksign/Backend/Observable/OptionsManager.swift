@@ -115,6 +115,12 @@ struct Options: Codable, Equatable {
 	var suffix: String?
 	/// Also save app store downloads to the Downloads folder
 	var saveAppStoreDownloadsToDownloadsFolder: Bool
+	/// If tweaks should be injected into all app extensions (PlugIns and Extensions)
+	var injectIntoExtensions: Bool
+	/// Inject path (i.e. `@rpath`)
+	var injectPath: InjectPath
+	/// Inject folder (i.e. `Frameworks/`)
+	var injectFolder: InjectFolder
 	// default
 	static let defaultOptions = Options(
 		appAppearance: "Default",
@@ -149,7 +155,10 @@ struct Options: Codable, Equatable {
         notifications: false,
         prefix: nil,
         suffix: nil,
-        saveAppStoreDownloadsToDownloadsFolder: true
+        saveAppStoreDownloadsToDownloadsFolder: true,
+		injectIntoExtensions: true,
+		injectPath: .executable_path,
+		injectFolder: .frameworks
 	)
 	// extraction library values
 	static let extractionLibraryValues = ["Zip", "ZIPFoundation"]
@@ -162,5 +171,26 @@ struct Options: Codable, Equatable {
 	static func randomString() -> String {
 		let letters = UUID().uuidString
 		return String((0..<6).compactMap { _ in letters.randomElement() })
+	}
+
+	enum InjectPath: String, Codable, CaseIterable, LocalizedDescribable {
+		case executable_path = "@executable_path"
+		case rpath = "@rpath"
+	}
+	
+	enum InjectFolder: String, Codable, CaseIterable, LocalizedDescribable {
+		case root = "/"
+		case frameworks = "/Frameworks/"
+	}
+}
+
+protocol LocalizedDescribable {
+	var localizedDescription: String { get }
+}
+
+extension LocalizedDescribable where Self: RawRepresentable, RawValue == String {
+	var localizedDescription: String {
+		let localized = NSLocalizedString(self.rawValue, comment: "")
+		return localized == self.rawValue ? self.rawValue : localized
 	}
 }

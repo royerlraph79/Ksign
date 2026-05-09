@@ -10,25 +10,36 @@ import NimbleViews
 
 // MARK: - View
 struct SettingsView: View {
-
-	#if false
+    @AppStorage("feather.selectedCert") private var _storedSelectedCert: Int = 0
+    @FetchRequest(
+        entity: CertificatePair.entity(),
+        sortDescriptors: [NSSortDescriptor(keyPath: \CertificatePair.date, ascending: false)],
+        animation: .snappy
+    ) private var _certificates: FetchedResults<CertificatePair>
+    
+    private var selectedCertificate: CertificatePair? {
+        guard
+            _storedSelectedCert >= 0,
+            _storedSelectedCert < _certificates.count
+        else {
+            return nil
+        }
+        return _certificates[_storedSelectedCert]
+    }
+    
+    
 	private let _donationsUrl = "https://github.com/sponsors/nyasami"
 	private let _githubUrl = "https://github.com/nyasami/ksign"
     private let _discordUrl = "https://discord.gg/sfbZfQzVdQ"
-	#endif
-
 	// MARK: Body
     var body: some View {
 		NBNavigationView(.localized("Settings")) {
 			Form {
-
-				#if false
+//				#if !NIGHTLY && !DEBUG
 				SettingsDonationCellView(site: _donationsUrl)
-				#endif
-
-				#if false
+//				#endif
+				
 				_feedback()
-				#endif
 				
 				Section {
                     NavigationLink(destination: AppIconView()) {
@@ -38,6 +49,23 @@ struct SettingsView: View {
                         Label(.localized("Appearance"), systemImage: "paintbrush")
                     }
 				}
+                
+                NBSection(.localized("Certificates")) {
+                    
+                    if let cert = selectedCertificate {
+                        CertificatesCellView(cert: cert)
+                    } else {
+                        Text(.localized("No Certificate"))
+                            .font(.footnote)
+                            .foregroundColor(.disabled())
+                    }
+                    NavigationLink(destination: CertificatesView()) {
+                        Label(.localized("Certificates"), systemImage: "signature")
+                    }
+                 
+                } footer: {
+                    Text(.localized("Add and manage certificates used for signing applications."))
+                }
 				
 				NBSection(.localized("Features")) {
                     NavigationLink(destination: LogsView(manager: LogsManager.shared)) {
@@ -45,9 +73,6 @@ struct SettingsView: View {
                     }
 					NavigationLink(destination: AppFeaturesView()) {
                         Label(.localized("App Features"), systemImage: "sparkles")
-                    }
-					NavigationLink(destination: CertificatesView()) {
-                        Label(.localized("Certificates"), systemImage: "signature")
                     }
 					NavigationLink(destination: ConfigurationView()) {
                         Label(.localized("Signing Options"), systemImage: "gear")
@@ -77,8 +102,6 @@ struct SettingsView: View {
 
 // MARK: - View extension
 extension SettingsView {
-
-	#if false
 	@ViewBuilder
 	private func _feedback() -> some View {
 		Section {
@@ -96,7 +119,6 @@ extension SettingsView {
             }
 		}
 	}
-	#endif
 	
 	@ViewBuilder
 	private func _directories() -> some View {
