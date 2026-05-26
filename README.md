@@ -31,7 +31,7 @@ Go to [Releases](https://github.com/Nyasami/Ksign-public/releases) and download 
 </a>
 
 ## Special thanks
-- Feather by [khcrysalis](https://github.com/khcrysalis/Feather)  
+- Feather by [claration](https://github.com/claration/Feather)  
 
 - Product manager Khoindvn
 

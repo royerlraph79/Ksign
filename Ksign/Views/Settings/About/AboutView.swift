@@ -11,19 +11,14 @@ import NimbleJSON
 
 // MARK: - View
 struct AboutView: View {
-	typealias CreditsDataHandler = Result<[CreditsModel], Error>
-	private let _dataService = NBFetchService()
-	
-	@State private var _credits: [CreditsModel] = []
-	@State var isLoading = true
-	
-	private let _creditsUrl = "https://raw.githubusercontent.com/khcrysalis/project-credits/refs/heads/main/feather/creditsv2.json"
-	
+	@State private var _credits: [CreditsModel] = [
+		.init(name: "C", desc: "Developer", github: "claration"),
+		.init(name: "Asami", desc: "Developer", github: "Nyasami"),
+		.init(name: "Lakhan Lothiyi", desc: "AltStore Repositories", github: "llsc12"),
+	]
 	// MARK: Body
 	var body: some View {
 		NBList(.localized("About")) {
-           
-			
 			NBSection(.localized("Credits")) {
 				if !_credits.isEmpty {
 					ForEach(_credits, id: \.self) { credit in
@@ -33,44 +28,6 @@ struct AboutView: View {
 				}
 			}
 			
-		}
-		.animation(.default, value: isLoading)
-		.task {
-			await _fetchAllData()
-		}
-	}
-	
-	private func _fetchAllData() async {
-		await withTaskGroup(of: (String, CreditsDataHandler).self) { group in
-			group.addTask { return await _fetchCredits(self._creditsUrl, using: _dataService) }
-			
-			for await (type, result) in group {
-				await MainActor.run {
-					switch result {
-					case .success(let data):
-						if type == "credits" {
-							self._credits = data
-						}
-					case .failure(_): break
-					}
-				}
-			}
-		}
-		
-		await MainActor.run {
-			isLoading = false
-		}
-	}
-	
-	private func _fetchCredits(_ urlString: String, using service: NBFetchService) async -> (String, CreditsDataHandler) {
-		let type = urlString == _creditsUrl 
-		? "credits"
-		: "donators"
-		
-		return await withCheckedContinuation { continuation in
-			service.fetch(from: urlString) { (result: CreditsDataHandler) in
-				continuation.resume(returning: (type, result))
-			}
 		}
 	}
 }
